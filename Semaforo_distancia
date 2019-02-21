@@ -1,0 +1,103 @@
+#include<LiquidCrystal.h>
+float CalcularVelocidade();
+LiquidCrystal displayAviso(12,11,5,4,3,2);
+int ledVerde = 37;
+int ledAmarelo = 34;
+int ledVermelho = 35;
+int buzzer = 15;
+int pino_sensor = 43;
+int pino_sensor2 = 42;
+
+float deltaD = 0.075; //7,5 cm em m
+int estado_sensor = 0;
+int estado_sensor2 = 0;
+float s = 0.30; //30 cm em m  //Distância
+
+void setup() {
+  displayAviso.begin(16,2);
+  displayAviso.setCursor(0,0);
+  pinMode(ledVerde, OUTPUT);
+  pinMode(ledAmarelo, OUTPUT);
+  pinMode(ledVermelho, OUTPUT);
+  pinMode(pino_sensor, INPUT);
+  pinMode(pino_sensor2, INPUT);
+  Serial.begin(9600);
+  
+}
+
+void loop() {
+
+  digitalWrite(ledVerde, HIGH);
+  delay(4000);
+  
+  digitalWrite(ledVerde, LOW);
+
+  digitalWrite(ledAmarelo, HIGH);
+  delay(2000);
+  digitalWrite(ledAmarelo, LOW);
+ 
+  double tempo = millis();
+  digitalWrite(ledVermelho, HIGH);
+  while(millis() < tempo + 20000){
+    SmartSemaforo((tempo+ 20000) - millis());
+  }
+  tempo = 0;
+  digitalWrite(ledVermelho, LOW);
+}
+
+void SmartSemaforo( double tempoSemaforo){
+  displayAviso.clear();
+    float velocidade = CalcularVelocidade();  
+    float tempFaixa = s/(velocidade/3.6);    // Descobrir o tempo atraves da velocidade constante e com distancia ate a faixa determinada em 30 cm ou o.30 m
+    double distanciaFaixa  = (velocidade * velocidade)/(250 * 0.50);
+    Serial.println("Tempo para o carro chegar na faixa de pedestre:");
+    displayAviso.setCursor(0,1);
+    Serial.println(tempFaixa);
+    Serial.println(tempoSemaforo/1000);
+    Serial.println("distancia para faixa: ");
+    Serial.print(distanciaFaixa);
+//    if((tempFaixa > tempoSemaforo/1000 || tempFaixa < 5) && tempFaixa != 0){                    //Caso de perigo, onde o tempo para o pedestre atravessar é menos que 5 segundos
+//      displayAviso.print("PERIGOOO!");     
+//    }
+    if(distanciaFaixa > 0.30){
+      tone(buzzer,1800);
+    }
+    else{                 
+      displayAviso.print("TRÂNSITO SEGURO");
+    }
+
+
+    
+  delay(100);  
+  }
+  
+
+
+float CalcularVelocidade(){
+    float tempo = 0;
+    int primeiraDeteccao = 0;
+    int segundaDeteccao = 0;
+    estado_sensor = digitalRead(pino_sensor);
+    if(estado_sensor != 0)
+    {
+      // Sem movimento, mantem led verde ligado
+      Serial.println("Movimento não detectado!");
+    }
+    else 
+    {
+      primeiraDeteccao = millis();
+      for(int i = 0; digitalRead(pino_sensor2) != 0; i++){
+      }
+      segundaDeteccao = millis();
+      tempo = (float)segundaDeteccao - primeiraDeteccao;
+      Serial.println("Tempo de movimento:");
+      tempo = tempo/1000;
+      Serial.println(tempo);
+      float velocidade = (deltaD/tempo)*3.6; 
+      displayAviso.print("Velocidade:");
+      displayAviso.setCursor(11, 0);
+      displayAviso.print(velocidade);
+      Serial.println("km/h");
+      return velocidade;
+    }
+}
