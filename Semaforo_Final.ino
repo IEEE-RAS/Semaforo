@@ -1,14 +1,19 @@
 #include<LiquidCrystal.h>
+#define tempoBuzzer 10
 float CalcularVelocidade();
 void SmartSemaforo(double tempoSemaforo);
+
 
 LiquidCrystal displayAviso(32,31,53,51,49,47);
 int ledVerde = 26;
 int ledAmarelo = 22;
 int ledVermelho = 24;
-int buzzer = 9;
 int pino_sensor = 38;
 int pino_sensor2 = 36;
+
+
+int frequencia = 0;
+int Pinofalante = 40;
 
 float deltaD = 0.075; //7,5 cm em m
 int estado_sensor = 0;
@@ -16,6 +21,7 @@ int estado_sensor2 = 0;
 float s = 0.30; //30 cm em m  //Distância
 
 void setup() {
+  pinMode(Pinofalante,OUTPUT);
   Serial.begin(9600);
   displayAviso.begin(16,2);
   displayAviso.setCursor(0,0);
@@ -24,6 +30,7 @@ void setup() {
   pinMode(ledVermelho, OUTPUT);
   pinMode(pino_sensor, INPUT);
   pinMode(pino_sensor2, INPUT);
+  
 }
 
 void loop() {
@@ -48,30 +55,36 @@ void loop() {
 }
 
 void SmartSemaforo(double tempoSemaforo){
-  displayAviso.clear();
-    float velocidade = CalcularVelocidade();  
+    displayAviso.clear();
+    displayAviso.print("TRANSITO SEGURO");
+    float velocidade = CalcularVelocidade(); 
     float tempCarro = s/(velocidade);    // Descobrir o tempo atraves da velocidade constante e com distancia ate a faixa determinada em 30 cm ou o.30 m
-    Serial.println("Tempo para o carro chegar na faixa de pedestre: ");
     displayAviso.setCursor(0,1);
-    Serial.println(tempCarro);
     velocidade = (velocidade * 3.6);
     float distancia = ((velocidade * velocidade) / (250 * 0.6));
-    Serial.print("Distancia de Frenagem: ");
-    Serial.print(distancia);
+    displayAviso.setCursor(0,1);
+    displayAviso.print("Speed: ");
+    displayAviso.setCursor(4,1);
+    displayAviso.print(distancia);
     displayAviso.setCursor(0,0);
     if(distancia > 0.30){                    //Caso de perigo, onde o tempo para o pedestre atravessar é menos que 5 segundos
-      displayAviso.setCursor(5,0);
-      displayAviso.print("Alerta!!!");
-      displayAviso.setCursor(0,1);
-      tone(buzzer,1800);
-       delay(2000);
-      displayAviso.clear();
-     
+       displayAviso.clear();
+       float instante = millis();
+       displayAviso.print("Perigoooo!");
+       displayAviso.setCursor(0,1);
+       displayAviso.print("Dis:");
+       displayAviso.setCursor(4,1);
+       displayAviso.print(distancia);
+      tone(Pinofalante, 1800, 3000);
+      delay(1);
+       
+       while(instante + 3000 > millis()){
+       }
     }
-    else{                 
-      displayAviso.print("TRANSITO SEGURO");
-    }   
-  delay(100);  
+    else{ 
+        displayAviso.clear();                
+        displayAviso.print("TRANSITO SEGURO");
+    }
 }
   
 
@@ -92,12 +105,14 @@ float CalcularVelocidade(){
     for(int i = 0; digitalRead(pino_sensor2) != 0; i++){
     }
     segundaDeteccao = millis();
-    if((pino_sensor2) != digitalRead(pino_sensor)){
-    tempo = (float)segundaDeteccao - primeiraDeteccao;
-    tempo = tempo/1000;
-    float velocidade = (deltaD/tempo);
-    return velocidade;
-    delay(100);
+    if(digitalRead(pino_sensor2) != digitalRead(pino_sensor)){
+      tempo = (float)segundaDeteccao - primeiraDeteccao;
+      tempo = tempo/1000;
+      float velocidade = (deltaD/tempo);
+      return velocidade;
+      delay(100);
+    }else{
+      return 0;
     }
   }
 }
