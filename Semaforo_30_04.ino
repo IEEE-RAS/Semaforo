@@ -1,6 +1,6 @@
 #include<LiquidCrystal.h>
 #define tempoBuzzer 10
-float CalcularVelocidade();
+double CalcularVelocidade();
 void SmartSemaforo(double tempoSemaforo);
 
 
@@ -15,10 +15,10 @@ int pino_sensor2 = 38;
 int frequencia = 0;
 int Pinofalante = 40;
 
-float deltaD = 0.075; //7,5 cm em m
+double deltaD = 0.070; //7,5 cm em m
 int estado_sensor = 0;
 int estado_sensor2 = 0;
-float s = 0.30; //30 cm em m  //Distância
+double s = 0.30; //30 cm em m  //Distância
 
 void setup() {
   pinMode(Pinofalante,OUTPUT);
@@ -57,13 +57,13 @@ void loop() {
 void SmartSemaforo(double tempoSemaforo){
     displayAviso.clear();
     displayAviso.print("TRANSITO SEGURO");
-    float velocidade = CalcularVelocidade(); 
-    float tempCarro = s/(velocidade);    // Descobrir o tempo atraves da velocidade constante e com distancia ate a faixa determinada em 30 cm ou o.30 m
+    double velocidade = CalcularVelocidade(); 
+    double tempCarro = s/(velocidade);    // Descobrir o tempo atraves da velocidade constante e com distancia ate a faixa determinada em 30 cm ou o.30 m
     velocidade = (velocidade * 3.6);
-    float distancia = ((velocidade * velocidade) / (250 * 0.6));
-    if(distancia > 0.30){                    //Caso de perigo, onde o tempo para o pedestre atravessar é menos que 5 segundos
+    double distancia = ((velocidade * velocidade) / (250 * 0.6));
+    if(distancia > 0.030){                    //Caso de perigo, onde o tempo para o pedestre atravessar é menos que 5 segundos
        displayAviso.clear();
-       float instante = millis();
+       double instante = millis();
        displayAviso.setCursor(0,0);
        displayAviso.print("Atencao: Perigo!");
       tone(Pinofalante, 1800, 3000);
@@ -80,14 +80,13 @@ void SmartSemaforo(double tempoSemaforo){
   
 
 
-float CalcularVelocidade(){
-  float tempo = 0;
+double CalcularVelocidade(){
+  double tempo = 0;
   int primeiraDeteccao = 0;
   int segundaDeteccao = 0;
   estado_sensor = digitalRead(pino_sensor);
   if(estado_sensor != 0)
   {
-    Serial.println("Movimento não detectado!");
     return 0;
   }
   else 
@@ -97,9 +96,13 @@ float CalcularVelocidade(){
     }
     segundaDeteccao = millis();
     if(segundaDeteccao > primeiraDeteccao){
-      tempo = (float)segundaDeteccao - primeiraDeteccao;
+      tempo = (double) segundaDeteccao - primeiraDeteccao;
       tempo = tempo/1000;
-      float velocidade = (deltaD/tempo);
+      double velocidade = (deltaD/tempo);
+      Serial.println(velocidade);
+       Serial.println(primeiraDeteccao);
+       Serial.println(segundaDeteccao);
+       Serial.println(tempo);
       return velocidade;
       delay(100);
     }else{
